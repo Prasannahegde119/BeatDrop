@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Start BeatDrop Downloader
+Comment=Start the local BeatDrop downloader and open it in your browser
+Exec=/home/prasanna/Desktop/Downloader/launch.sh
+Path=/home/prasanna/Desktop/Downloader
+Icon=/home/prasanna/Desktop/Downloader/assets/beatdrop-icon.svg
+Terminal=false
+Categories=AudioVideo;
+StartupNotify=true

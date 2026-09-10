@@ -1,0 +1,20 @@
+# Ignore downloaded media files
+downloads/*
+!downloads/.gitkeep
+
+# Ignore runtime data files
+data/*
+!data/.gitkeep
+
+# Ignore Python virtual environment and byte code
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Ignore temporary files & server logs
+server.log
+server.pid
+*.tmp
+backups/

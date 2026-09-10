@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Search and download your favorite YouTube music and videos directly to your device with instant local playback."
+    />
+    <title>BeatDrop | YouTube Media Downloader & Player</title>
+
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- FontAwesome for Premium Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- PWA Settings & Web App Manifest -->
+    <meta name="theme-color" content="#0b0d17" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BeatDrop" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/pwa-icon-192.png') }}" />
+
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.6.0" />
+  </head>
+  <body>
+    <div class="glow-container">
+      <div class="glow-blob glow-1"></div>
+      <div class="glow-blob glow-2"></div>
+    </div>
+
+    <div class="app-container">
+      <!-- Centered Premium Application Header -->
+      <header class="app-header header-centered">
+        <div class="brand-hero-container">
+          <div class="brand-logo-glow-ring"></div>
+          <div class="brand-logo-badge">
+            <img src="{{ url_for('static', filename='images/beatdrop-icon.svg') }}" alt="BeatDrop Logo" class="brand-logo-img" />
+          </div>
+          <div class="brand-title-group">
+            <h1 class="brand-name">Beat<span class="brand-highlight">Drop</span></h1>
+            <span class="brand-badge-version">v2.5 PRO</span>
+          </div>
+        </div>
+        <p class="brand-tagline">
+          <i class="fa-solid fa-bolt text-indigo"></i> High-Speed YouTube Media Downloader & Stereo Player
+        </p>
+        <div class="header-stats-row">
+          <div class="server-status-pill">
+            <span class="status-dot"></span>
+            <span class="status-text">Server Active</span>
+          </div>
+          <div class="stat-badge" title="Saved Tracks in Local Library">
+            <i class="fa-solid fa-music text-purple"></i>
+            <span id="stat-library-count">0 Tracks</span>
+          </div>
+          <div class="stat-badge" title="Active Downloading Tasks">
+            <i class="fa-solid fa-arrow-down-short-wide text-indigo"></i>
+            <span id="stat-active-count">0 Active</span>
+          </div>
+          <div class="stat-badge stat-badge-accent" title="Audio Processing Engine">
+            <i class="fa-solid fa-compact-disc text-spotify"></i>
+            <span>320kbps Audio Engine</span>
+          </div>
+          <button id="pwa-install-btn" class="stat-badge pwa-install-pill" style="display: none;" title="Install BeatDrop App on Android / Desktop">
+            <i class="fa-solid fa-mobile-screen-button text-indigo"></i>
+            <span>Install App</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Workspace -->
+      <main class="app-main">
+        <!-- Search Section -->
+        <section class="section search-section" id="search-section-wrapper">
+          <div class="search-card-wrapper glass-card">
+            <div class="search-box">
+              <div class="input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input
+                  type="text"
+                  id="search-input"
+                  placeholder="Search song title, artist, album, or paste YouTube URL..."
+                  autocomplete="off"
+                />
+                <button
+                  id="clear-search"
+                  class="clear-btn"
+                  aria-label="Clear search"
+                  style="display: none"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <button id="search-button" class="btn btn-primary btn-search-action">
+                <span>Search</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+            <!-- Quick Filter Tag Pills -->
+            <div class="quick-tags" id="quick-tags">
+              <span class="tag-label">Trending Now:</span>
+              <button class="tag-pill" data-query="Trending Songs 2026"><i class="fa-solid fa-fire"></i> Trending</button>
+              <button class="tag-pill" data-query="Top Bollywood Music"><i class="fa-solid fa-music"></i> Top Hits</button>
+              <button class="tag-pill" data-query="DJ Mashup 2026"><i class="fa-solid fa-sliders"></i> DJ Remixes</button>
+              <button class="tag-pill" data-query="Lo-Fi Chill Beats"><i class="fa-solid fa-headphones"></i> Lo-Fi</button>
+              <button class="tag-pill" data-query="4K Music Video"><i class="fa-solid fa-video"></i> 4K Videos</button>
+            </div>
+          </div>
+
+          <!-- Search Loading State (Soundwave Animation) -->
+          <div
+            id="search-loader"
+            class="loader-container"
+            style="display: none"
+          >
+            <div class="soundwave">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </div>
+            <p>Scanning YouTube media catalog...</p>
+          </div>
+
+          <!-- Search Results Grid -->
+          <div id="results-grid" class="results-grid" style="display: none">
+            <!-- Dynamically populated card structure -->
+          </div>
+        </section>
+
+        <!-- Grid Layout for Active Downloads & Local Library -->
+        <div class="dashboard-grid">
+          <!-- Active Downloads Panel -->
+          <section class="panel downloads-panel" id="downloads-panel-wrapper">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <i
+                  class="fa-solid fa-circle-down panel-title-icon text-indigo"
+                ></i
+                >Active Tasks
+              </h2>
+            </div>
+            <div id="active-downloads-list" class="downloads-list">
+              <!-- Dynamically populated running downloads -->
+              <div id="no-downloads" class="empty-state">
+                <i class="fa-solid fa-hourglass-empty"></i>
+                <p>No active downloads in progress</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Saved Files Panel -->
+          <section class="panel library-panel" id="library-panel-wrapper">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <i
+                  class="fa-solid fa-folder-open panel-title-icon text-purple"
+                ></i
+                >Local Library
+              </h2>
+              <div class="panel-actions">
+                <button
+                  id="mix-library"
+                  class="btn btn-secondary btn-mix"
+                  type="button"
+                >
+                  <i class="fa-solid fa-sliders"></i> DJ Mix
+                </button>
+                <button
+                  id="refresh-library"
+                  class="btn btn-icon"
+                  aria-label="Refresh library"
+                >
+                  <i class="fa-solid fa-rotate"></i>
+                </button>
+              </div>
+            </div>
+            <div id="library-grid" class="library-grid">
+              <!-- Dynamically populated files from directory -->
+            </div>
+            <div id="library-empty" class="empty-state" style="display: none">
+              <i class="fa-solid fa-music"></i>
+              <p>
+                Your library is empty. Search and download files to build your
+                collection.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Spotify Music Player Panel (Replaces Download History) -->
+        <section class="panel spotify-player-panel" id="spotify-music-player-wrapper">
+          <div class="panel-header spotify-header">
+            <div class="spotify-brand">
+              <i class="fa-brands fa-spotify spotify-icon"></i>
+              <h2 class="panel-title">Spotify Music Player</h2>
+            </div>
+            <div class="spotify-search-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="mp-search" placeholder="Search your music tracks..." autocomplete="off" />
+            </div>
+          </div>
+          
+          <div class="spotify-player-body">
+            <!-- Playlist track rows grid -->
+            <div id="song-list" class="spotify-song-list">
+              <!-- Dynamically populated from local library songs -->
+            </div>
+            <div id="spotify-empty" class="empty-state" style="display: none">
+              <i class="fa-solid fa-music"></i>
+              <p>No audio tracks available in your library. Download some songs to start listening!</p>
+            </div>
+          </div>
+
+          <!-- Live DJ Microphone Console Control Bar -->
+          <div class="dj-mic-toolbar" id="dj-mic-toolbar">
+            <div class="dj-mic-info">
+              <button id="dj-mic-toggle-btn" class="btn btn-mic-toggle" type="button" title="Toggle Live DJ Microphone">
+                <i class="fa-solid fa-microphone-slash" id="dj-mic-icon"></i>
+                <span id="dj-mic-label">DJ Mic OFF</span>
+              </button>
+              <div class="dj-mic-visualizer" id="dj-mic-visualizer" style="display: none;">
+                <span class="mic-bar"></span>
+                <span class="mic-bar"></span>
+                <span class="mic-bar"></span>
+                <span class="mic-bar"></span>
+              </div>
+            </div>
+            
+            <div class="dj-mic-controls">
+              <div class="dj-mic-slider-group">
+                <i class="fa-solid fa-sliders mic-slider-icon" title="Mic Gain Volume"></i>
+                <input type="range" id="dj-mic-gain" min="0" max="200" value="100" title="Mic Volume Gain (0%-200%)" />
+                <span id="dj-mic-gain-val" class="mic-gain-val">100%</span>
+              </div>
+              <button id="dj-ducking-toggle" class="btn-ducking-badge active" type="button" title="Auto-Duck Music Volume when Speaking">
+                <i class="fa-solid fa-compress text-purple"></i> Auto-Duck
+              </button>
+            </div>
+          </div>
+
+          <!-- Spotify Bottom Player Controller Bar -->
+          <div class="spotify-now-playing-bar" id="spotify-bar">
+            <div class="sp-track-info">
+              <div class="sp-album-art" id="np-art">
+                <i class="fa-solid fa-compact-disc sp-disc-spin"></i>
+              </div>
+              <div class="sp-track-meta">
+                <div class="sp-track-title" id="np-title">Select a track to play</div>
+                <div class="sp-track-artist" id="np-artist">Local Collection</div>
+              </div>
+            </div>
+
+            <div class="sp-player-center">
+              <div class="sp-controls-row">
+                <button id="np-shuffle" class="sp-control-btn" title="Shuffle Play"><i class="fa-solid fa-shuffle"></i></button>
+                <button id="np-prev" class="sp-control-btn" title="Previous Track"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="np-play" class="sp-control-btn sp-play-main" title="Play/Pause"><i class="fa-solid fa-play" id="np-play-icon"></i></button>
+                <button id="np-next" class="sp-control-btn" title="Next Track"><i class="fa-solid fa-forward-step"></i></button>
+                <button id="np-repeat" class="sp-control-btn" title="Repeat Mode: Off"><i class="fa-solid fa-repeat"></i></button>
+              </div>
+              <div class="sp-timeline-row">
+                <span id="np-current" class="sp-time">0:00</span>
+                <div class="sp-progress-container">
+                  <input type="range" id="np-seek" min="0" max="100" value="0" step="0.1" aria-label="Seek track position">
+                </div>
+                <span id="np-duration" class="sp-time">0:00</span>
+              </div>
+            </div>
+
+            <div class="sp-volume-row">
+              <button id="sp-volume-btn" class="sp-volume-icon-btn" title="Mute/Unmute"><i class="fa-solid fa-volume-high" id="sp-vol-icon"></i></button>
+              <input type="range" id="np-volume" min="0" max="100" value="70" aria-label="Volume">
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Media Player Modal (minimal) -->
+      <div
+        id="player-modal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-song-title"
+      >
+        <div class="modal-backdrop"></div>
+        <div class="modal-content glass-card">
+          <button
+            id="close-player"
+            class="modal-close-btn"
+            aria-label="Close media player"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="player-wrapper">
+            <div class="player-header">
+              <div class="player-track-icon" id="player-track-icon">
+                <i class="fa-solid fa-music"></i>
+              </div>
+              <div class="player-info">
+                <h3 id="modal-song-title" class="player-title">Track Name</h3>
+                <span class="player-status">Now Playing</span>
+              </div>
+            </div>
+
+            <!-- Custom HTML5 Media Elements -->
+            <div class="media-container">
+              <audio id="html5-audio" class="media-element" controls preload="metadata"></audio>
+              <video id="html5-video" class="media-element" controls preload="metadata" style="display: none;"></video>
+            </div>
+            <!-- Player Controls -->
+            <div class="player-controls" id="player-controls">
+              <div class="controls-row">
+                <button id="player-prev" class="control-btn btn-icon" aria-label="Previous"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="player-play" class="control-btn btn-icon" aria-label="Play/Pause"><i class="fa-solid fa-play" id="player-play-icon"></i></button>
+                <button id="player-next" class="control-btn btn-icon" aria-label="Next"><i class="fa-solid fa-forward-step"></i></button>
+                <button id="player-shuffle" class="control-btn btn-icon" aria-label="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
+                <button id="player-repeat" class="control-btn btn-icon" aria-label="Repeat"><i class="fa-solid fa-repeat"></i></button>
+                <div class="player-queue-info" id="player-queue-info">Queue: <span id="queue-count">0</span></div>
+              </div>
+            <div class="progress-row">
+                <span id="time-current">0:00</span>
+                <input type="range" id="seek-slider" min="0" max="100" value="0">
+                <span id="time-duration">0:00</span>
+            </div>
+            <div class="player-volume">
+                <i class="fa-solid fa-volume-high" id="player-volume-icon" title="Volume"></i>
+                <input type="range" id="volume-slider" min="0" max="100" value="50" aria-label="Volume">
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-app download notifications -->
+      <div
+        id="toast-region"
+        class="toast-region"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+
+      <footer class="app-footer">
+        <p>
+          BeatDrop &copy; 2026. All media stored locally in
+          <code>Downloads/</code> folder.
+        </p>
+      </footer>
+    </div>
+
+    <!-- Core Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2.6.0"></script>
+  </body>
+</html>
