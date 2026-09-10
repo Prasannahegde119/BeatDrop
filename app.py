@@ -306,7 +306,11 @@ def search():
         'quiet': True,
         'extract_flat': 'in_playlist',
         'skip_download': True,
-        'js_runtimes': {'node': {}},
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'android', 'web', 'mweb'],
+            }
+        },
     }
 
     try:
@@ -385,7 +389,11 @@ def run_download_task(url, mode, q, task_id, cancel_event):
                 'preferredquality': '192',
             }],
             'quiet': True,
-            'js_runtimes': {'node': {}},
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web', 'mweb'],
+                }
+            },
         }
     else:
         ydl_opts = {
@@ -403,7 +411,11 @@ def run_download_task(url, mode, q, task_id, cancel_event):
                 'preferedformat': 'mp4',
             }],
             'quiet': True,
-            'js_runtimes': {'node': {}},
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web', 'mweb'],
+                }
+            },
         }
 
     try:
