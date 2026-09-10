@@ -306,9 +306,14 @@ def search():
         'quiet': True,
         'extract_flat': 'in_playlist',
         'skip_download': True,
+        'nocheckcertificate': True,
+        'geo_bypass': True,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'android', 'web', 'mweb'],
+                'player_client': ['ios', 'android', 'mweb'],
             }
         },
     }
@@ -381,6 +386,11 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             },
             'outtmpl': '%(title)s.%(ext)s',
             'keepvideo': False,
+            'nocheckcertificate': True,
+            'geo_bypass': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            },
             'progress_hooks': [progress_hook],
             'postprocessor_hooks': [postprocessor_hook],
             'postprocessors': [{
@@ -391,7 +401,7 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             'quiet': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android', 'web', 'mweb'],
+                    'player_client': ['ios', 'android', 'mweb'],
                 }
             },
         }
@@ -404,6 +414,11 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             },
             'outtmpl': '%(title)s.%(ext)s',
             'keepvideo': False,
+            'nocheckcertificate': True,
+            'geo_bypass': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            },
             'progress_hooks': [progress_hook],
             'postprocessor_hooks': [postprocessor_hook],
             'postprocessors': [{
@@ -413,7 +428,7 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             'quiet': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android', 'web', 'mweb'],
+                    'player_client': ['ios', 'android', 'mweb'],
                 }
             },
         }
