@@ -313,7 +313,8 @@ def search():
         },
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'android', 'mweb'],
+                'player_client': ['android', 'ios', 'tv'],
+                'skip': ['webpage', 'configs'],
             }
         },
     }
@@ -401,7 +402,8 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             'quiet': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android', 'mweb'],
+                    'player_client': ['android', 'ios', 'tv'],
+                    'skip': ['webpage', 'configs'],
                 }
             },
         }
@@ -428,7 +430,8 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             'quiet': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'android', 'mweb'],
+                    'player_client': ['android', 'ios', 'tv'],
+                    'skip': ['webpage', 'configs'],
                 }
             },
         }
