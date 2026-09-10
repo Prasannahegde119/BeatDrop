@@ -290,6 +290,12 @@ def service_worker():
 def chrome_devtools_json():
     return jsonify({}), 200
 
+@app.errorhandler(404)
+def page_not_found(e):
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Endpoint not found'}), 404
+    return render_template('index.html')
+
 @app.route('/api/search', methods=['GET'])
 def search():
     query = request.args.get('q', '')
