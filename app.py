@@ -59,9 +59,9 @@ def get_cookies_filepath():
 
 
 def build_ydl_opts(extra_opts=None, player_clients=None):
-    """Build yt-dlp options with cookie file support, JS runtimes, and optimized headers."""
+    """Build yt-dlp options with cookie file support, remote EJS challenge solver, JS runtimes, and optimized headers."""
     if player_clients is None:
-        player_clients = ['mweb', 'ios', 'android', 'tv', 'web']
+        player_clients = ['tv_embedded', 'tv', 'mweb', 'web', 'ios', 'android']
 
     opts = {
         'quiet': True,
@@ -70,6 +70,7 @@ def build_ydl_opts(extra_opts=None, player_clients=None):
         'socket_timeout': 30,
         'retries': 5,
         'fragment_retries': 5,
+        'remote_components': ['ejs:github'],
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -362,9 +363,10 @@ def search():
         return jsonify({'error': 'Query parameter "q" is required'}), 400
 
     client_attempts = [
+        ['tv_embedded', 'tv', 'mweb', 'web'],
         ['mweb', 'ios', 'android', 'tv', 'web'],
-        ['tv_embedded', 'mweb', 'ios', 'android'],
         ['android', 'ios', 'tv'],
+        ['tv'],
     ]
 
     last_error = None
@@ -396,7 +398,10 @@ def search():
             last_error = e
 
     error_msg = str(last_error) if last_error else "Search failed"
-    if 'Sign in to confirm' in error_msg or 'bot' in error_msg.lower():
+    err_lower = error_msg.lower()
+    if any(k in err_lower for k in ['reloaded', 'page needs']):
+        error_msg = "YouTube session reload restriction ('The page needs to be reloaded'). Try re-exporting fresh cookies or clearing stale cookies in BeatDrop Cookie Settings."
+    elif any(k in err_lower for k in ['sign in', 'bot']):
         error_msg = "YouTube bot detection triggered on cloud server. Please set YouTube cookies in BeatDrop Cookie Settings or set YOUTUBE_COOKIES env var on Render."
     return jsonify({'error': error_msg}), 500
 
@@ -437,9 +442,10 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             q.put({'status': 'processing', 'message': 'Writing ID3 tags and finalizing file...'})
 
     client_attempts = [
+        ['tv_embedded', 'tv', 'mweb', 'web'],
         ['mweb', 'ios', 'android', 'tv', 'web'],
-        ['tv_embedded', 'mweb', 'ios', 'android'],
         ['android', 'ios', 'tv'],
+        ['tv'],
     ]
 
     last_error = None
@@ -537,14 +543,17 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             if cancel_event.is_set():
                 q.put({'status': 'cancelled', 'message': 'Download cancelled'})
                 return
-            err_str = str(e)
-            if 'Sign in to confirm' in err_str or 'bot' in err_str.lower():
+            err_str = str(e).lower()
+            if any(k in err_str for k in ['sign in', 'bot', 'reloaded', 'page needs', '403', 'sabr', 'po_token', 'signature', 'challenge']):
                 continue
             break
 
     if not download_success:
         err_msg = str(last_error) if last_error else 'Download failed.'
-        if 'Sign in to confirm' in err_msg or 'bot' in err_msg.lower():
+        err_lower = err_msg.lower()
+        if any(k in err_lower for k in ['reloaded', 'page needs']):
+            err_msg = "YouTube session reload restriction ('The page needs to be reloaded'). Try re-exporting fresh cookies from YouTube or clearing stale cookies in BeatDrop Cookie Settings."
+        elif any(k in err_lower for k in ['sign in', 'bot']):
             err_msg = "Sign in to confirm you're not a bot (Render cloud IP block). Please upload YouTube cookies in BeatDrop Cookie Settings or set YOUTUBE_COOKIES env var on Render."
         q.put({
             'status': 'error',
