@@ -11,8 +11,13 @@ import subprocess
 import yt_dlp
 from mutagen.id3 import ID3, TIT2, TPE1, TALB
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+# Enable ProxyFix to correctly identify HTTPS scheme & client IP behind Render proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+
 
 # Directory setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -327,6 +332,10 @@ def merge_audio_tracks(file_names, fade_duration=1.2, output_name=None, title=No
     write_mp3_metadata(output_path, title=os.path.splitext(output_name)[0], artist=artist, album='Mashups')
     return output_name
 
+
+@app.route('/healthz')
+def healthz():
+    return jsonify({'status': 'ok', 'service': 'BeatDrop'}), 200
 
 @app.route('/')
 def index():

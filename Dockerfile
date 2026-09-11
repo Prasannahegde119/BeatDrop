@@ -37,6 +37,7 @@ RUN mkdir -p downloads data
 # Expose Render default web port
 EXPOSE 10000
 
-# Run with Gunicorn WSGI server
-CMD ["gunicorn", "--workers=1", "--threads=8", "--bind=0.0.0.0:10000", "--timeout=300", "--max-requests=100", "--max-requests-jitter=10", "app:app"]
+# Run with Gunicorn WSGI server trusting Render reverse proxy headers
+CMD ["gunicorn", "--workers=2", "--threads=16", "--bind=0.0.0.0:10000", "--forwarded-allow-ips=*", "--timeout=300", "--max-requests=1000", "--max-requests-jitter=50", "app:app"]
+
 
