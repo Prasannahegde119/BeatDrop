@@ -409,13 +409,20 @@ document.addEventListener("DOMContentLoaded", () => {
         stateIconEl.innerHTML =
           '<i class="fa-solid fa-triangle-exclamation"></i>';
         if (cancelButton) cancelButton.remove();
+        if (data.message && (data.message.toLowerCase().includes("bot") || data.message.toLowerCase().includes("cookie"))) {
+          const fixBtn = document.createElement("button");
+          fixBtn.className = "fix-cookies-btn";
+          fixBtn.innerHTML = '<i class="fa-solid fa-cookie-bite"></i> Add YouTube Cookies';
+          fixBtn.onclick = () => openCookiesModal();
+          statusTextEl.parentElement.appendChild(fixBtn);
+        }
         showToast(`Download failed: ${data.message}`, "error");
         notifySystem("Download failed", data.message);
         eventSource.close();
         setTimeout(() => {
           taskCard.remove();
           checkActiveDownloadsEmpty();
-        }, 4000);
+        }, 7000);
       } else if (data.status === "cancelled") {
         taskCard.dataset.state = "cancelled";
         statusTextEl.textContent = "Download cancelled";
@@ -1798,6 +1805,136 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (audioEl.dataset.originalVol) {
       audioEl.volume = Number(audioEl.dataset.originalVol);
     }
+  }
+
+  // ==========================================================================
+  // YOUTUBE COOKIES MODAL HANDLERS
+  // ==========================================================================
+  const cookiesModal = document.getElementById("cookies-modal");
+  const cookiesModalBtn = document.getElementById("cookies-modal-btn");
+  const closeCookiesModalBtn = document.getElementById("close-cookies-modal");
+  const cookiesModalBackdrop = document.getElementById("cookies-modal-backdrop");
+  const cookiesTextarea = document.getElementById("cookies-textarea");
+  const cookiesFileInput = document.getElementById("cookies-file-input");
+  const cookiesFileName = document.getElementById("cookies-file-name");
+  const saveCookiesBtn = document.getElementById("save-cookies-btn");
+  const deleteCookiesBtn = document.getElementById("delete-cookies-btn");
+  const cookiesStatusText = document.getElementById("cookies-status-text");
+  const cookiesActiveBanner = document.getElementById("cookies-active-banner");
+  const cookiesInactiveBanner = document.getElementById("cookies-inactive-banner");
+  const cookiesLineCount = document.getElementById("cookies-line-count");
+
+  function openCookiesModal() {
+    if (cookiesModal) {
+      cookiesModal.style.display = "flex";
+      cookiesModal.classList.add("active");
+      fetchCookiesStatus();
+    }
+  }
+
+  function closeCookiesModal() {
+    if (cookiesModal) {
+      cookiesModal.classList.remove("active");
+      setTimeout(() => { cookiesModal.style.display = "none"; }, 250);
+    }
+  }
+
+  if (cookiesModalBtn) cookiesModalBtn.addEventListener("click", openCookiesModal);
+  if (closeCookiesModalBtn) closeCookiesModalBtn.addEventListener("click", closeCookiesModal);
+  if (cookiesModalBackdrop) cookiesModalBackdrop.addEventListener("click", closeCookiesModal);
+
+  async function fetchCookiesStatus() {
+    try {
+      const response = await fetch("/api/cookies");
+      const data = await response.json();
+      if (response.ok) {
+        if (data.has_cookies) {
+          if (cookiesStatusText) cookiesStatusText.textContent = `Cookies: Active (${data.lines})`;
+          if (cookiesModalBtn) cookiesModalBtn.classList.add("cookies-active-pill");
+          if (cookiesActiveBanner) cookiesActiveBanner.style.display = "flex";
+          if (cookiesInactiveBanner) cookiesInactiveBanner.style.display = "none";
+          if (cookiesLineCount) cookiesLineCount.textContent = data.lines;
+          if (deleteCookiesBtn) deleteCookiesBtn.style.display = "inline-flex";
+        } else {
+          if (cookiesStatusText) cookiesStatusText.textContent = "Cookies: None";
+          if (cookiesModalBtn) cookiesModalBtn.classList.remove("cookies-active-pill");
+          if (cookiesActiveBanner) cookiesActiveBanner.style.display = "none";
+          if (cookiesInactiveBanner) cookiesInactiveBanner.style.display = "flex";
+          if (deleteCookiesBtn) deleteCookiesBtn.style.display = "none";
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch cookies status:", err);
+    }
+  }
+
+  // Fetch initial cookies status on page load
+  fetchCookiesStatus();
+
+  if (cookiesFileInput) {
+    cookiesFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (cookiesFileName) cookiesFileName.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          if (cookiesTextarea) cookiesTextarea.value = evt.target.result;
+        };
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  if (saveCookiesBtn) {
+    saveCookiesBtn.addEventListener("click", async () => {
+      const text = cookiesTextarea ? cookiesTextarea.value.trim() : "";
+      if (!text) {
+        showToast("Please paste Netscape cookies text or upload a cookies.txt file.", "error");
+        return;
+      }
+      saveCookiesBtn.disabled = true;
+      saveCookiesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+      try {
+        const response = await fetch("/api/cookies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cookies: text })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showToast(`YouTube cookies saved (${data.lines} entries loaded)!`, "success");
+          fetchCookiesStatus();
+          closeCookiesModal();
+        } else {
+          showToast(data.error || "Failed to save cookies.", "error");
+        }
+      } catch (err) {
+        showToast("Error saving cookies: " + err.message, "error");
+      } finally {
+        saveCookiesBtn.disabled = false;
+        saveCookiesBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply Cookies';
+      }
+    });
+  }
+
+  if (deleteCookiesBtn) {
+    deleteCookiesBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to clear your saved YouTube cookies?")) return;
+      try {
+        const response = await fetch("/api/cookies", { method: "DELETE" });
+        const data = await response.json();
+        if (response.ok) {
+          if (cookiesTextarea) cookiesTextarea.value = "";
+          if (cookiesFileName) cookiesFileName.textContent = "No file chosen";
+          showToast("YouTube cookies cleared.", "info");
+          fetchCookiesStatus();
+        } else {
+          showToast(data.error || "Failed to clear cookies.", "error");
+        }
+      } catch (err) {
+        showToast("Error clearing cookies: " + err.message, "error");
+      }
+    });
   }
 });
 

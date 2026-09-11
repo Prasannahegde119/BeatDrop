@@ -74,6 +74,10 @@
             <i class="fa-solid fa-compact-disc text-spotify"></i>
             <span>320kbps Audio Engine</span>
           </div>
+          <button id="cookies-modal-btn" class="stat-badge cookies-status-pill" style="cursor: pointer;" title="YouTube Cookies & Authentication Settings">
+            <i class="fa-solid fa-cookie-bite text-purple"></i>
+            <span id="cookies-status-text">Cookies: Checking...</span>
+          </button>
           <button id="pwa-install-btn" class="stat-badge pwa-install-pill" style="display: none;" title="Install BeatDrop App on Android / Desktop">
             <i class="fa-solid fa-mobile-screen-button text-indigo"></i>
             <span>Install App</span>
@@ -343,6 +347,95 @@
                 <i class="fa-solid fa-volume-high" id="player-volume-icon" title="Volume"></i>
                 <input type="range" id="volume-slider" min="0" max="100" value="50" aria-label="Volume">
             </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- YouTube Cookies Configuration Modal -->
+      <div
+        id="cookies-modal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cookies-modal-title"
+        style="display: none;"
+      >
+        <div class="modal-backdrop" id="cookies-modal-backdrop"></div>
+        <div class="modal-content glass-card cookies-modal-content">
+          <button
+            id="close-cookies-modal"
+            class="modal-close-btn"
+            aria-label="Close cookies modal"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="cookies-wrapper">
+            <div class="cookies-header">
+              <div class="cookies-icon-box">
+                <i class="fa-solid fa-cookie-bite text-purple"></i>
+              </div>
+              <div class="cookies-header-text">
+                <h3 id="cookies-modal-title" class="cookies-title">YouTube Cookies &amp; Authentication</h3>
+                <p class="cookies-subtitle">Pass browser cookies to bypass YouTube bot verification on cloud hosting (Render).</p>
+              </div>
+            </div>
+
+            <div class="cookies-body">
+              <div id="cookies-active-banner" class="cookies-banner banner-active" style="display: none;">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                  <strong>YouTube Cookies Loaded</strong>
+                  <p><span id="cookies-line-count">0</span> active entries. Server downloads authenticated.</p>
+                </div>
+              </div>
+
+              <div id="cookies-inactive-banner" class="cookies-banner banner-inactive">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                  <strong>No YouTube Cookies Configured</strong>
+                  <p>Cloud servers (Render) need cookies to prevent YouTube bot detection errors.</p>
+                </div>
+              </div>
+
+              <div class="cookies-help-box">
+                <span class="help-title"><i class="fa-solid fa-lightbulb"></i> How to export YouTube cookies:</span>
+                <ol class="help-steps">
+                  <li>Install extension <b>"Get cookies.txt LOCALLY"</b> in your web browser.</li>
+                  <li>Visit <a href="https://www.youtube.com" target="_blank" rel="noopener">youtube.com</a> while signed in.</li>
+                  <li>Click extension icon &rarr; <b>"Export cookies as cookies.txt"</b> or copy to clipboard.</li>
+                  <li>Paste the text below or upload your <code>cookies.txt</code> file.</li>
+                </ol>
+              </div>
+
+              <div class="cookies-form-group">
+                <label for="cookies-textarea" class="cookies-label">
+                  <i class="fa-solid fa-code"></i> Paste Netscape <code>cookies.txt</code> Content:
+                </label>
+                <textarea
+                  id="cookies-textarea"
+                  class="cookies-textarea"
+                  rows="6"
+                  placeholder="# Netscape HTTP Cookie File&#10;.youtube.com TRUE / FALSE 1750000000 VISITOR_INFO1_LIVE ...&#10;.youtube.com TRUE / FALSE 1750000000 LOGIN_INFO ..."
+                ></textarea>
+              </div>
+
+              <div class="cookies-file-row">
+                <label for="cookies-file-input" class="btn btn-secondary btn-file-pick">
+                  <i class="fa-solid fa-file-arrow-up"></i> Select cookies.txt File
+                </label>
+                <input type="file" id="cookies-file-input" accept=".txt" style="display: none;" />
+                <span id="cookies-file-name" class="file-name-hint">No file chosen</span>
+              </div>
+            </div>
+
+            <div class="cookies-footer">
+              <button id="save-cookies-btn" class="btn btn-primary btn-save-cookies">
+                <i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply Cookies
+              </button>
+              <button id="delete-cookies-btn" class="btn btn-secondary btn-delete-cookies" style="display: none;">
+                <i class="fa-solid fa-trash-can"></i> Clear Cookies
+              </button>
             </div>
           </div>
         </div>

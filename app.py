@@ -22,6 +22,7 @@ HISTORY_FILE = os.path.join(DATA_DIR, 'download-history.json')
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
 
+COOKIES_FILE = os.path.join(DATA_DIR, 'cookies.txt')
 active_downloads = {}
 active_downloads_lock = threading.Lock()
 mix_jobs = {}
@@ -31,6 +32,64 @@ history_lock = threading.Lock()
 
 class DownloadCancelled(Exception):
     """Raised by the progress hook when a user cancels an active transfer."""
+
+
+def ensure_cookies_from_env():
+    """Hydrate data/cookies.txt from environment variables if present."""
+    for env_var in ['YOUTUBE_COOKIES', 'YTDLP_COOKIES', 'COOKIES_TEXT']:
+        cookies_text = os.environ.get(env_var, '').strip()
+        if cookies_text:
+            try:
+                with open(COOKIES_FILE, 'w', encoding='utf-8') as f:
+                    f.write(cookies_text)
+                break
+            except Exception:
+                pass
+
+
+def get_cookies_filepath():
+    """Return valid cookies file path if available and non-empty."""
+    ensure_cookies_from_env()
+    if os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 0:
+        return COOKIES_FILE
+    base_cookies = os.path.join(BASE_DIR, 'cookies.txt')
+    if os.path.exists(base_cookies) and os.path.getsize(base_cookies) > 0:
+        return base_cookies
+    return None
+
+
+def build_ydl_opts(extra_opts=None, player_clients=None):
+    """Build yt-dlp options with cookie file support, JS runtimes, and optimized headers."""
+    if player_clients is None:
+        player_clients = ['mweb', 'ios', 'android', 'tv', 'web']
+
+    opts = {
+        'quiet': True,
+        'nocheckcertificate': True,
+        'geo_bypass': True,
+        'socket_timeout': 30,
+        'retries': 5,
+        'fragment_retries': 5,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
+        'js_runtimes': {'deno': {}, 'node': {}},
+        'extractor_args': {
+            'youtube': {
+                'player_client': player_clients,
+            }
+        },
+    }
+
+    cookies_path = get_cookies_filepath()
+    if cookies_path:
+        opts['cookiefile'] = cookies_path
+
+    if extra_opts:
+        opts.update(extra_opts)
+    return opts
+
 
 
 def load_history():
@@ -302,50 +361,50 @@ def search():
     if not query:
         return jsonify({'error': 'Query parameter "q" is required'}), 400
 
-    ydl_opts = {
-        'quiet': True,
-        'extract_flat': 'in_playlist',
-        'skip_download': True,
-        'nocheckcertificate': True,
-        'geo_bypass': True,
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        },
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios', 'tv'],
-                'skip': ['webpage', 'configs'],
-            }
-        },
-    }
+    client_attempts = [
+        ['mweb', 'ios', 'android', 'tv', 'web'],
+        ['tv_embedded', 'mweb', 'ios', 'android'],
+        ['android', 'ios', 'tv'],
+    ]
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Search top 5 entries
-            search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
-            entries = search_result.get('entries', [])
-            
-            results = []
-            for entry in entries:
-                if not entry:
-                    continue
-                results.append({
-                    'id': entry.get('id'),
-                    'title': entry.get('title'),
-                    'duration': entry.get('duration'),
-                    'uploader': entry.get('uploader'),
-                    'url': f"https://www.youtube.com/watch?v={entry.get('id')}",
-                    'thumbnail': f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg"
-                })
-            return jsonify(results)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    last_error = None
+    for clients in client_attempts:
+        ydl_opts = build_ydl_opts({
+            'extract_flat': 'in_playlist',
+            'skip_download': True,
+        }, player_clients=clients)
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                search_result = ydl.extract_info(f"ytsearch5:{query}", download=False)
+                entries = search_result.get('entries', [])
+
+                results = []
+                for entry in entries:
+                    if not entry:
+                        continue
+                    results.append({
+                        'id': entry.get('id'),
+                        'title': entry.get('title'),
+                        'duration': entry.get('duration'),
+                        'uploader': entry.get('uploader'),
+                        'url': f"https://www.youtube.com/watch?v={entry.get('id')}",
+                        'thumbnail': f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg"
+                    })
+                return jsonify(results)
+        except Exception as e:
+            last_error = e
+
+    error_msg = str(last_error) if last_error else "Search failed"
+    if 'Sign in to confirm' in error_msg or 'bot' in error_msg.lower():
+        error_msg = "YouTube bot detection triggered on cloud server. Please set YouTube cookies in BeatDrop Cookie Settings or set YOUTUBE_COOKIES env var on Render."
+    return jsonify({'error': error_msg}), 500
+
 
 def run_download_task(url, mode, q, task_id, cancel_event):
     temp_dir = os.path.join(DOWNLOAD_DIR, '.tmp')
     os.makedirs(temp_dir, exist_ok=True)
 
-    # Unique hook to push progress into request's queue
     def progress_hook(d):
         if cancel_event.is_set():
             raise DownloadCancelled()
@@ -356,8 +415,7 @@ def run_download_task(url, mode, q, task_id, cancel_event):
             percent = (downloaded / total * 100) if total else 0
             speed = d.get('speed', 0)
             eta = d.get('eta', 0)
-            
-            # Formulate progress structure
+
             progress_data = {
                 'status': 'downloading',
                 'percent': round(percent, 1),
@@ -378,131 +436,188 @@ def run_download_task(url, mode, q, task_id, cancel_event):
         elif d.get('status') == 'finished':
             q.put({'status': 'processing', 'message': 'Writing ID3 tags and finalizing file...'})
 
-    if mode == 'audio':
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'paths': {
-                'home': DOWNLOAD_DIR,
-                'temp': temp_dir,
-            },
-            'outtmpl': '%(title)s.%(ext)s',
-            'keepvideo': False,
-            'nocheckcertificate': True,
-            'geo_bypass': True,
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            },
-            'progress_hooks': [progress_hook],
-            'postprocessor_hooks': [postprocessor_hook],
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'quiet': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'ios', 'tv'],
-                    'skip': ['webpage', 'configs'],
-                }
-            },
-        }
-    else:
-        ydl_opts = {
-            'format': 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a][acodec^=mp4a]/bestvideo[vcodec^=avc1]+bestaudio/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'paths': {
-                'home': DOWNLOAD_DIR,
-                'temp': temp_dir,
-            },
-            'outtmpl': '%(title)s.%(ext)s',
-            'keepvideo': False,
-            'nocheckcertificate': True,
-            'geo_bypass': True,
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            },
-            'progress_hooks': [progress_hook],
-            'postprocessor_hooks': [postprocessor_hook],
-            'postprocessors': [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': 'mp4',
-            }],
-            'quiet': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'ios', 'tv'],
-                    'skip': ['webpage', 'configs'],
-                }
-            },
-        }
+    client_attempts = [
+        ['mweb', 'ios', 'android', 'tv', 'web'],
+        ['tv_embedded', 'mweb', 'ios', 'android'],
+        ['android', 'ios', 'tv'],
+    ]
 
-    try:
-        if cancel_event.is_set():
-            raise DownloadCancelled()
+    last_error = None
+    download_success = False
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Extract info to get title before download finishes for UI representation
-            info = ydl.extract_info(url, download=False)
-            title = info.get('title', 'Unknown Title')
-            filename = ydl.prepare_filename(info)
-            # Adjust extension based on mode
-            if mode == 'audio':
-                filename = os.path.splitext(filename)[0] + '.mp3'
-            
-            q.put({
-                'status': 'starting',
-                'title': title,
-                'filename': os.path.basename(filename)
-            })
-            
-            # Start download & post-processing
-            ydl.download([url])
-
-            if cancel_event.is_set():
-                raise DownloadCancelled()
-
-            # Ensure filename points to actual created file on disk
-            final_filename = os.path.basename(filename)
-            target_ext = '.mp3' if mode == 'audio' else '.mp4'
-            if not os.path.exists(os.path.join(DOWNLOAD_DIR, final_filename)):
-                base_stem = os.path.splitext(final_filename)[0][:12].lower()
-                for file_in_dir in os.listdir(DOWNLOAD_DIR):
-                    if file_in_dir.endswith(target_ext) and (base_stem in file_in_dir.lower()):
-                        final_filename = file_in_dir
-                        break
-
-            # If mode is audio, remove any leftover video container file with matching base title
-            if mode == 'audio':
-                base_stem = os.path.splitext(final_filename)[0]
-                for file_in_dir in os.listdir(DOWNLOAD_DIR):
-                    if file_in_dir != final_filename and os.path.splitext(file_in_dir)[0] == base_stem:
-                        ext_check = os.path.splitext(file_in_dir)[1].lower()
-                        if ext_check in ['.webm', '.m4a', '.mp4', '.mkv', '.3gp']:
-                            try:
-                                os.remove(os.path.join(DOWNLOAD_DIR, file_in_dir))
-                            except Exception:
-                                pass
-
-            add_history_entry(title, final_filename, mode)
-            
-            q.put({
-                'status': 'completed',
-                'title': title,
-                'filename': final_filename
-            })
-    except DownloadCancelled:
-        q.put({'status': 'cancelled', 'message': 'Download cancelled'})
-    except Exception as e:
+    for clients in client_attempts:
         if cancel_event.is_set():
             q.put({'status': 'cancelled', 'message': 'Download cancelled'})
             return
+
+        extra_opts = {
+            'paths': {
+                'home': DOWNLOAD_DIR,
+                'temp': temp_dir,
+            },
+            'outtmpl': '%(title)s.%(ext)s',
+            'keepvideo': False,
+            'progress_hooks': [progress_hook],
+            'postprocessor_hooks': [postprocessor_hook],
+        }
+
+        if mode == 'audio':
+            extra_opts.update({
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            })
+        else:
+            extra_opts.update({
+                'format': 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a][acodec^=mp4a]/bestvideo[vcodec^=avc1]+bestaudio/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'postprocessors': [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': 'mp4',
+                }],
+            })
+
+        ydl_opts = build_ydl_opts(extra_opts, player_clients=clients)
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                title = info.get('title', 'Unknown Title')
+                filename = ydl.prepare_filename(info)
+                if mode == 'audio':
+                    filename = os.path.splitext(filename)[0] + '.mp3'
+
+                q.put({
+                    'status': 'starting',
+                    'title': title,
+                    'filename': os.path.basename(filename)
+                })
+
+                ydl.download([url])
+
+                if cancel_event.is_set():
+                    raise DownloadCancelled()
+
+                final_filename = os.path.basename(filename)
+                target_ext = '.mp3' if mode == 'audio' else '.mp4'
+                if not os.path.exists(os.path.join(DOWNLOAD_DIR, final_filename)):
+                    base_stem = os.path.splitext(final_filename)[0][:12].lower()
+                    for file_in_dir in os.listdir(DOWNLOAD_DIR):
+                        if file_in_dir.endswith(target_ext) and (base_stem in file_in_dir.lower()):
+                            final_filename = file_in_dir
+                            break
+
+                if mode == 'audio':
+                    base_stem = os.path.splitext(final_filename)[0]
+                    for file_in_dir in os.listdir(DOWNLOAD_DIR):
+                        if file_in_dir != final_filename and os.path.splitext(file_in_dir)[0] == base_stem:
+                            ext_check = os.path.splitext(file_in_dir)[1].lower()
+                            if ext_check in ['.webm', '.m4a', '.mp4', '.mkv', '.3gp']:
+                                try:
+                                    os.remove(os.path.join(DOWNLOAD_DIR, file_in_dir))
+                                except Exception:
+                                    pass
+
+                add_history_entry(title, final_filename, mode)
+
+                q.put({
+                    'status': 'completed',
+                    'title': title,
+                    'filename': final_filename
+                })
+                download_success = True
+                break
+        except DownloadCancelled:
+            q.put({'status': 'cancelled', 'message': 'Download cancelled'})
+            return
+        except Exception as e:
+            last_error = e
+            if cancel_event.is_set():
+                q.put({'status': 'cancelled', 'message': 'Download cancelled'})
+                return
+            err_str = str(e)
+            if 'Sign in to confirm' in err_str or 'bot' in err_str.lower():
+                continue
+            break
+
+    if not download_success:
+        err_msg = str(last_error) if last_error else 'Download failed.'
+        if 'Sign in to confirm' in err_msg or 'bot' in err_msg.lower():
+            err_msg = "Sign in to confirm you're not a bot (Render cloud IP block). Please upload YouTube cookies in BeatDrop Cookie Settings or set YOUTUBE_COOKIES env var on Render."
         q.put({
             'status': 'error',
-            'message': str(e)
+            'message': err_msg
         })
-    finally:
-        with active_downloads_lock:
-            active_downloads.pop(task_id, None)
+
+    with active_downloads_lock:
+        active_downloads.pop(task_id, None)
+
+
+@app.route('/api/cookies', methods=['GET'])
+def get_cookies_info():
+    cookies_path = get_cookies_filepath()
+    if not cookies_path:
+        return jsonify({
+            'has_cookies': False,
+            'lines': 0,
+            'message': 'No YouTube cookies loaded'
+        })
+    try:
+        with open(cookies_path, 'r', encoding='utf-8') as f:
+            lines = [l for l in f.readlines() if l.strip() and not l.strip().startswith('#')]
+        return jsonify({
+            'has_cookies': True,
+            'lines': len(lines),
+            'file_size': format_bytes(os.path.getsize(cookies_path)),
+            'updated_at': os.path.getmtime(cookies_path)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/cookies', methods=['POST'])
+def save_cookies():
+    cookies_text = None
+    if request.is_json:
+        cookies_text = request.json.get('cookies')
+    elif 'file' in request.files:
+        file = request.files['file']
+        cookies_text = file.read().decode('utf-8', errors='ignore')
+    elif 'cookies' in request.form:
+        cookies_text = request.form.get('cookies')
+
+    if not cookies_text or not cookies_text.strip():
+        return jsonify({'error': 'No cookies content provided'}), 400
+
+    cookies_text = cookies_text.strip()
+    try:
+        with open(COOKIES_FILE, 'w', encoding='utf-8') as f:
+            f.write(cookies_text)
+
+        valid_lines = [l for l in cookies_text.splitlines() if l.strip() and not l.strip().startswith('#')]
+        return jsonify({
+            'success': True,
+            'message': 'YouTube cookies saved successfully!',
+            'lines': len(valid_lines)
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to save cookies: {str(e)}'}), 500
+
+
+@app.route('/api/cookies', methods=['DELETE'])
+def delete_cookies():
+    try:
+        if os.path.exists(COOKIES_FILE):
+            os.remove(COOKIES_FILE)
+        base_cookies = os.path.join(BASE_DIR, 'cookies.txt')
+        if os.path.exists(base_cookies):
+            os.remove(base_cookies)
+        return jsonify({'success': True, 'message': 'Cookies cleared successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # Helper formatting functions
 def format_bytes(b):
@@ -836,5 +951,5 @@ def library_entries():
 
 
 if __name__ == '__main__':
-    # Listen on localhost (standard for desktop wrapper / local server)
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
