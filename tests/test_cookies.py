@@ -42,8 +42,7 @@ def test_ensure_cookies_from_env_hydrates_cookies(monkeypatch):
 def test_build_ydl_opts_includes_js_runtimes_and_headers():
     opts = build_ydl_opts()
 
-    assert 'remote_components' in opts
-    assert 'ejs:github' in opts['remote_components']
+    assert 'cachedir' in opts
     assert 'js_runtimes' in opts
     assert 'deno' in opts['js_runtimes']
     assert 'node' in opts['js_runtimes']

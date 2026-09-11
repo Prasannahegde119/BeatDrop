@@ -59,18 +59,21 @@ def get_cookies_filepath():
 
 
 def build_ydl_opts(extra_opts=None, player_clients=None):
-    """Build yt-dlp options with cookie file support, remote EJS challenge solver, JS runtimes, and optimized headers."""
+    """Build yt-dlp options with safe cache directory, JS runtimes, and optimized headers."""
     if player_clients is None:
         player_clients = ['tv_embedded', 'tv', 'mweb', 'web', 'ios', 'android']
+
+    cache_dir = os.path.join(DATA_DIR, '.cache')
+    os.makedirs(cache_dir, exist_ok=True)
 
     opts = {
         'quiet': True,
         'nocheckcertificate': True,
         'geo_bypass': True,
-        'socket_timeout': 30,
-        'retries': 5,
-        'fragment_retries': 5,
-        'remote_components': ['ejs:github'],
+        'socket_timeout': 15,
+        'retries': 3,
+        'fragment_retries': 3,
+        'cachedir': cache_dir,
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -698,7 +701,11 @@ def download():
     return Response(
         sse_generator(),
         mimetype='text/event-stream',
-        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+        headers={
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        },
     )
 
 

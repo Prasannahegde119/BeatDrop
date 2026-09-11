@@ -500,24 +500,28 @@ document.addEventListener("DOMContentLoaded", () => {
   async function refreshLibrary() {
     try {
       const response = await fetch("/api/library");
+      if (!response.ok) {
+        console.warn("Library endpoint responded with status:", response.status);
+        return;
+      }
+      const ctype = response.headers.get("content-type") || "";
+      if (!ctype.includes("application/json")) {
+        console.warn("Library endpoint returned non-JSON response:", response.status);
+        return;
+      }
       const files = await response.json();
-
       libraryGrid.innerHTML = "";
 
-      if (response.ok) {
-        const statLibraryCount = document.getElementById("stat-library-count");
-        if (statLibraryCount) {
-          statLibraryCount.textContent = `${files.length} Track${files.length === 1 ? '' : 's'}`;
-        }
+      const statLibraryCount = document.getElementById("stat-library-count");
+      if (statLibraryCount) {
+        statLibraryCount.textContent = `${files.length} Track${files.length === 1 ? '' : 's'}`;
+      }
 
-        if (files.length === 0) {
-          libraryEmpty.style.display = "flex";
-        } else {
-          libraryEmpty.style.display = "none";
-          renderLibrary(files);
-        }
+      if (files.length === 0) {
+        libraryEmpty.style.display = "flex";
       } else {
-        console.error("Failed to retrieve media library:", files.error);
+        libraryEmpty.style.display = "none";
+        renderLibrary(files);
       }
     } catch (error) {
       console.error("Error fetching library:", error);
@@ -529,8 +533,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!historyList) return;
     try {
       const response = await fetch("/api/history");
-      const entries = await response.json();
       if (!response.ok) return;
+      const ctype = response.headers.get("content-type") || "";
+      if (!ctype.includes("application/json")) return;
+      const entries = await response.json();
 
       historyList.innerHTML = "";
       if (historyEmpty) historyEmpty.style.display = entries.length ? "none" : "flex";
@@ -1571,8 +1577,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function init() {
       try {
         fetch('/api/library')
-          .then(r => r.json())
-          .then(list => { setSongs(list || []); });
+          .then(r => (r.ok && (r.headers.get('content-type') || '').includes('application/json')) ? r.json() : [])
+          .then(list => { setSongs(Array.isArray(list) ? list : []); })
+          .catch(() => {});
       } catch (e) {}
 
       try {

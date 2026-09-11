@@ -45,8 +45,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip non-GET requests and browser extensions
-  if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
+  // Skip non-GET requests, browser extensions, and EventSource SSE streams
+  if (event.request.method !== 'GET' || !url.protocol.startsWith('http') || url.pathname.startsWith('/api/download')) {
     return;
   }
 
