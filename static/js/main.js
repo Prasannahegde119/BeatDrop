@@ -474,9 +474,14 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   function updateActiveCount() {
     const statActiveCount = document.getElementById("stat-active-count");
+    const mobileTaskBadge = document.getElementById("mobile-task-badge");
+    const cards = activeDownloadsList.querySelectorAll(".download-task-card");
     if (statActiveCount) {
-      const cards = activeDownloadsList.querySelectorAll(".download-task-card");
       statActiveCount.textContent = `${cards.length} Active`;
+    }
+    if (mobileTaskBadge) {
+      mobileTaskBadge.textContent = cards.length;
+      mobileTaskBadge.style.display = cards.length > 0 ? "inline-block" : "none";
     }
   }
 
@@ -1943,5 +1948,32 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  /* ==========================================
+     MOBILE NAVIGATION TAB SYSTEM
+     ========================================== */
+  const mobileBottomNav = document.getElementById("mobile-bottom-nav");
+  const mobileNavCookiesBtn = document.getElementById("mobile-nav-cookies");
+
+  if (mobileBottomNav) {
+    const navItems = mobileBottomNav.querySelectorAll(".mobile-nav-item[data-tab]");
+    navItems.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.tab;
+        navItems.forEach((item) => item.classList.remove("active"));
+        btn.classList.add("active");
+
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+  }
+
+  if (mobileNavCookiesBtn) {
+    mobileNavCookiesBtn.addEventListener("click", openCookiesModal);
+  }
 });
+
 

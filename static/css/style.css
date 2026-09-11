@@ -2222,4 +2222,159 @@ html, body {
     transform: translateY(-1px);
 }
 
+/* ==========================================================================
+   DEDICATED MOBILE APP NAVIGATION & MOBILE VIEWPORT ENGINE
+   ========================================================================== */
+
+.mobile-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 85px;
+    }
+
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 68px;
+        background: rgba(11, 15, 25, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 999;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        font-size: 0.72rem;
+        font-weight: 600;
+        gap: 0.25rem;
+        cursor: pointer;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.75rem;
+        position: relative;
+        transition: all 0.2s ease;
+        flex: 1;
+        min-height: 48px;
+    }
+
+    .mobile-nav-item i {
+        font-size: 1.25rem;
+        transition: transform 0.2s ease;
+    }
+
+    .mobile-nav-item.active {
+        color: #6366f1;
+    }
+
+    .mobile-nav-item.active i {
+        transform: translateY(-2px) scale(1.15);
+        filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+    }
+
+    .mobile-nav-item .nav-badge {
+        position: absolute;
+        top: 4px;
+        right: calc(50% - 16px);
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.15rem 0.4rem;
+        border-radius: 999px;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+
+    /* Mobile specific section tab states */
+    .mobile-tab-hidden {
+        display: none !important;
+    }
+
+    .mobile-tab-visible {
+        display: block !important;
+        animation: mobile-fade-in 0.3s ease;
+    }
+
+    @keyframes mobile-fade-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Touch Optimizations */
+    .app-container {
+        padding: 1rem 0.75rem;
+    }
+
+    .brand-name {
+        font-size: 2.2rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.8rem;
+    }
+
+    .header-stats-row {
+        gap: 0.5rem;
+    }
+
+    .stat-badge {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.78rem;
+    }
+
+    .search-card-wrapper {
+        padding: 1rem;
+    }
+
+    .search-box {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .search-box .btn {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+
+    .download-actions {
+        flex-direction: column;
+    }
+
+    .download-actions .btn {
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    .spotify-now-playing-bar {
+        position: sticky;
+        bottom: 68px;
+        z-index: 998;
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .cookies-modal-content {
+        margin: 1rem;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+}
+
+
 

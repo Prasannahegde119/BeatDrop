@@ -457,7 +457,32 @@
       </footer>
     </div>
 
+    <!-- Dedicated Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+      <button class="mobile-nav-item active" data-tab="search-section-wrapper" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Search</span>
+      </button>
+      <button class="mobile-nav-item" data-tab="downloads-panel-wrapper" aria-label="Tasks">
+        <i class="fa-solid fa-circle-down"></i>
+        <span>Tasks</span>
+        <span class="nav-badge" id="mobile-task-badge" style="display: none;">0</span>
+      </button>
+      <button class="mobile-nav-item" data-tab="library-panel-wrapper" aria-label="Library">
+        <i class="fa-solid fa-folder-open"></i>
+        <span>Library</span>
+      </button>
+      <button class="mobile-nav-item" data-tab="spotify-music-player-wrapper" aria-label="Player">
+        <i class="fa-brands fa-spotify"></i>
+        <span>Player</span>
+      </button>
+      <button class="mobile-nav-item" id="mobile-nav-cookies" aria-label="Cookies">
+        <i class="fa-solid fa-cookie-bite"></i>
+        <span>Cookies</span>
+      </button>
+    </nav>
+
     <!-- Core Script -->
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=2.6.0"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2.7.0"></script>
   </body>
 </html>
