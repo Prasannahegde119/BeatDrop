@@ -37,7 +37,8 @@ RUN mkdir -p downloads data
 # Expose Render default web port
 EXPOSE 10000
 
-# Run with Gunicorn WSGI server trusting Render reverse proxy headers
-CMD ["gunicorn", "--workers=2", "--threads=16", "--bind=0.0.0.0:10000", "--forwarded-allow-ips=*", "--timeout=300", "--max-requests=1000", "--max-requests-jitter=50", "app:app"]
+# Run with Gunicorn WSGI server dynamically binding to Render PORT
+CMD gunicorn --workers=2 --threads=8 --bind=0.0.0.0:${PORT:-10000} --forwarded-allow-ips="*" --timeout=300 app:app
+
 
 

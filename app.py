@@ -339,7 +339,15 @@ def healthz():
 
 @app.route('/')
 def index():
+    user_agent = request.headers.get('User-Agent', '').lower()
+    is_mobile = any(k in user_agent for k in ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'webos', 'blackberry', 'windows phone'])
+    if is_mobile or request.args.get('view') == 'mobile':
+        return render_template('mobile.html')
     return render_template('index.html')
+
+@app.route('/mobile')
+def mobile_view():
+    return render_template('mobile.html')
 
 @app.route('/favicon.ico')
 def favicon():

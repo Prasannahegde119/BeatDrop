@@ -1,0 +1,552 @@
+/* ==========================================================================
+   BeatDrop Dedicated Mobile App CSS System (Mobile-First)
+   ========================================================================== */
+
+:root {
+    --bg-base: #0b0d17;
+    --bg-surface: rgba(17, 24, 39, 0.85);
+    --color-primary: #6366f1;
+    --color-secondary: #a855f7;
+    --spotify-green: #1DB954;
+    --color-success: #10b981;
+    --color-danger: #ef4444;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    background-color: var(--bg-base);
+    color: #f3f4f6;
+    font-family: var(--font-family);
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
+}
+
+/* Glow Background */
+.glow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.glow-blob {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.35;
+}
+
+.glow-1 { top: -50px; left: -50px; background: var(--color-primary); }
+.glow-2 { bottom: -50px; right: -50px; background: var(--color-secondary); }
+
+.mobile-app-shell {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 140px; /* Space for bottom nav & mini player */
+}
+
+/* Header */
+.mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    background: rgba(11, 15, 25, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.mobile-logo-badge {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.65rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #a855f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.mobile-logo-img {
+    width: 75%;
+    height: 75%;
+}
+
+.mobile-brand-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+}
+
+.brand-accent {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.05em;
+}
+
+.mobile-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-action-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cookies-pill.cookies-active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+}
+
+/* Main Content Views */
+.mobile-main {
+    padding: 1rem;
+    flex: 1;
+}
+
+.mobile-tab-content {
+    display: none;
+}
+
+.mobile-tab-content.active {
+    display: block;
+    animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Search Card */
+.mobile-search-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.mobile-search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+}
+
+.mobile-search-box .search-icon { color: #9ca3af; }
+
+.mobile-search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.clear-btn, .btn-search {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.2rem;
+}
+
+.btn-search {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+}
+
+.quick-tags {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-top: 0.75rem;
+    scrollbar-width: none;
+}
+.quick-tags::-webkit-scrollbar { display: none; }
+
+.tag-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+}
+
+/* Soundwave Loader */
+.loader-container {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #9ca3af;
+}
+
+.soundwave {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    margin-bottom: 0.5rem;
+}
+
+.soundwave .bar {
+    width: 4px;
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 2px;
+    animation: wave 1s infinite ease-in-out alternate;
+}
+.soundwave .bar:nth-child(2) { animation-delay: 0.2s; }
+.soundwave .bar:nth-child(3) { animation-delay: 0.4s; }
+.soundwave .bar:nth-child(4) { animation-delay: 0.6s; }
+.soundwave .bar:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes wave {
+    0% { height: 10%; }
+    100% { height: 100%; }
+}
+
+/* Results & Cards */
+.results-grid, .library-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.video-card, .library-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.85rem;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.thumbnail-container {
+    position: relative;
+    aspect-ratio: 16/9;
+    border-radius: 0.6rem;
+    overflow: hidden;
+    background: #000;
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.video-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.video-uploader {
+    font-size: 0.78rem;
+    color: #9ca3af;
+}
+
+.download-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-primary, .btn-secondary, .btn-sm {
+    padding: 0.65rem;
+    border-radius: 0.65rem;
+    border: none;
+    font-weight: 600;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-secondary { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid rgba(255, 255, 255, 0.12); }
+.btn-mix { background: var(--color-secondary); color: #fff; }
+.btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+/* Download Task Card */
+.download-task-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.85rem;
+    padding: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.progress-bar-container {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Spotify Player */
+.spotify-card {
+    background: rgba(18, 18, 18, 0.95);
+    border: 1px solid rgba(29, 185, 84, 0.3);
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+.spotify-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+}
+
+.spotify-logo { font-size: 1.6rem; color: var(--spotify-green); }
+
+.mobile-player-search {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.mobile-player-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.85rem;
+    width: 100%;
+}
+
+.song-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem;
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.song-row.playing {
+    background: rgba(29, 185, 84, 0.15);
+    border: 1px solid var(--spotify-green);
+}
+
+.song-art {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    background: var(--spotify-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.song-meta { flex: 1; min-width: 0; }
+.song-title { color: #fff; font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-sub { color: #9ca3af; font-size: 0.75rem; }
+
+/* Mini Player Bottom Bar */
+.mobile-now-playing-bar {
+    position: fixed;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(18, 18, 18, 0.98);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 998;
+}
+
+.sp-track-info { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.sp-album-art { width: 40px; height: 40px; border-radius: 0.5rem; background: #282828; display: flex; align-items: center; justify-content: center; color: var(--spotify-green); }
+.sp-track-meta { min-width: 0; }
+.sp-track-title { color: #fff; font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-track-artist { color: #9ca3af; font-size: 0.72rem; }
+.sp-controls-right { display: flex; align-items: center; gap: 0.75rem; }
+.sp-btn { background: transparent; border: none; color: #b3b3b3; font-size: 1.1rem; cursor: pointer; }
+.sp-play-main { width: 34px; height: 34px; background: var(--spotify-green); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* Bottom Nav Bar */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: rgba(11, 15, 25, 0.98);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 999;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.72rem;
+    font-weight: 600;
+    gap: 0.2rem;
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+}
+
+.nav-item i { font-size: 1.2rem; }
+.nav-item.active { color: var(--color-primary); }
+.nav-item.active i { transform: scale(1.15); }
+
+.nav-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 14px);
+    background: var(--color-danger);
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 999px;
+}
+
+/* Modal Sheet */
+.modal-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+}
+
+.modal-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+}
+
+.modal-sheet-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    background: rgba(17, 24, 39, 0.98);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding: 1.25rem;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-sheet-header { display: flex; justify-content: space-between; align-items: center; }
+.close-btn { background: transparent; border: none; color: #9ca3af; font-size: 1.2rem; cursor: pointer; }
+.modal-sheet-body textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.65rem; padding: 0.65rem; color: #fff; font-family: monospace; font-size: 0.78rem; }
+
+/* Toast */
+.toast-region { position: fixed; top: 1rem; right: 1rem; left: 1rem; z-index: 1001; pointer-events: none; }
+.toast { background: rgba(17,24,39,0.95); border: 1px solid var(--color-primary); padding: 0.75rem 1rem; border-radius: 0.75rem; color: #fff; font-size: 0.85rem; margin-bottom: 0.5rem; pointer-events: auto; }

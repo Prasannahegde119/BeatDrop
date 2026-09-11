@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta name="description" content="BeatDrop Mobile - YouTube Media Downloader, Stereo Player & Live DJ Mixer" />
+  <title>BeatDrop Mobile | Downloader & Player</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- PWA & Mobile Web App Settings -->
+  <meta name="theme-color" content="#0b0d17" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BeatDrop" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/pwa-icon-192.png') }}" />
+
+  <!-- Mobile Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}?v=3.0.0" />
+</head>
+<body class="mobile-body">
+  <!-- Mobile Ambient Glow Blobs -->
+  <div class="glow-container">
+    <div class="glow-blob glow-1"></div>
+    <div class="glow-blob glow-2"></div>
+  </div>
+
+  <div class="mobile-app-shell">
+    <!-- Top Compact Mobile Header -->
+    <header class="mobile-header">
+      <div class="mobile-brand">
+        <div class="mobile-logo-badge">
+          <img src="{{ url_for('static', filename='images/beatdrop-icon.svg') }}" alt="BeatDrop" class="mobile-logo-img" />
+        </div>
+        <div class="mobile-brand-title">
+          <span class="brand-text">Beat<span class="brand-accent">Drop</span></span>
+          <span class="brand-tag">MOBILE PRO</span>
+        </div>
+      </div>
+
+      <div class="mobile-header-actions">
+        <button id="mobile-cookies-btn" class="header-action-pill cookies-pill" title="YouTube Cookies & Authentication">
+          <i class="fa-solid fa-cookie-bite"></i>
+          <span id="cookies-status-text">Cookies</span>
+        </button>
+        <button id="pwa-install-btn" class="header-action-pill pwa-pill" style="display: none;" title="Install App">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Mobile Views Container -->
+    <main class="mobile-main">
+      <!-- VIEW 1: SEARCH & DISCOVER -->
+      <section id="tab-search" class="mobile-tab-content active">
+        <div class="mobile-search-card">
+          <div class="mobile-search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="search-input" placeholder="Search songs, artists, or paste YouTube link..." autocomplete="off" />
+            <button id="clear-search" class="clear-btn" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+            <button id="search-button" class="btn-search"><i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+
+          <!-- Quick Tag Pills -->
+          <div class="quick-tags">
+            <button class="tag-pill" data-query="Trending Songs 2026"><i class="fa-solid fa-fire"></i> Trending</button>
+            <button class="tag-pill" data-query="Top Hits"><i class="fa-solid fa-music"></i> Top Hits</button>
+            <button class="tag-pill" data-query="DJ Remix 2026"><i class="fa-solid fa-sliders"></i> DJ Remix</button>
+            <button class="tag-pill" data-query="Lo-Fi Beats"><i class="fa-solid fa-headphones"></i> Lo-Fi</button>
+          </div>
+        </div>
+
+        <!-- Search Loader -->
+        <div id="search-loader" class="loader-container" style="display: none;">
+          <div class="soundwave">
+            <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+          </div>
+          <p>Scanning YouTube catalog...</p>
+        </div>
+
+        <!-- Search Results Grid -->
+        <div id="results-grid" class="results-grid" style="display: none;"></div>
+      </section>
+
+      <!-- VIEW 2: ACTIVE TASKS -->
+      <section id="tab-tasks" class="mobile-tab-content">
+        <div class="section-header">
+          <h2><i class="fa-solid fa-circle-down text-indigo"></i> Active Downloads</h2>
+        </div>
+        <div id="active-downloads-list" class="downloads-list">
+          <div id="no-downloads" class="empty-state">
+            <i class="fa-solid fa-hourglass-empty"></i>
+            <p>No active downloads right now</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: LOCAL LIBRARY -->
+      <section id="tab-library" class="mobile-tab-content">
+        <div class="section-header space-between">
+          <h2><i class="fa-solid fa-folder-open text-purple"></i> Saved Library</h2>
+          <div class="library-header-actions">
+            <button id="mix-library" class="btn-sm btn-mix"><i class="fa-solid fa-sliders"></i> DJ Mix</button>
+            <button id="refresh-library" class="btn-sm btn-icon"><i class="fa-solid fa-rotate"></i></button>
+          </div>
+        </div>
+        <div id="library-grid" class="library-grid"></div>
+        <div id="library-empty" class="empty-state" style="display: none;">
+          <i class="fa-solid fa-music"></i>
+          <p>Your library is empty. Search and download songs above!</p>
+        </div>
+      </section>
+
+      <!-- VIEW 4: SPOTIFY PLAYER & DJ MIC -->
+      <section id="tab-player" class="mobile-tab-content">
+        <div class="spotify-card">
+          <div class="spotify-card-header">
+            <i class="fa-brands fa-spotify spotify-logo"></i>
+            <h2>Spotify Stereo Player</h2>
+          </div>
+
+          <!-- Song list filter input -->
+          <div class="mobile-player-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="mp-search" placeholder="Filter library songs..." />
+          </div>
+
+          <div id="song-list" class="spotify-song-list"></div>
+          <div id="spotify-empty" class="empty-state" style="display: none;">
+            <i class="fa-solid fa-music"></i>
+            <p>No tracks in library yet.</p>
+          </div>
+
+          <!-- DJ Mic Bar -->
+          <div class="dj-mic-toolbar">
+            <button id="dj-mic-toggle-btn" class="btn-mic">
+              <i class="fa-solid fa-microphone-slash" id="dj-mic-icon"></i>
+              <span id="dj-mic-label">DJ Mic OFF</span>
+            </button>
+            <div class="mic-gain-group">
+              <input type="range" id="dj-mic-gain" min="0" max="200" value="100" />
+              <span id="dj-mic-gain-val">100%</span>
+            </div>
+            <button id="dj-ducking-toggle" class="btn-ducking active">Auto-Duck</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Spotify Player Bottom Controller -->
+    <div class="mobile-now-playing-bar" id="spotify-bar">
+      <div class="sp-track-info">
+        <div class="sp-album-art" id="np-art">
+          <i class="fa-solid fa-compact-disc sp-disc-spin"></i>
+        </div>
+        <div class="sp-track-meta">
+          <div class="sp-track-title" id="np-title">Select a track</div>
+          <div class="sp-track-artist" id="np-artist">Local Library</div>
+        </div>
+      </div>
+      <div class="sp-controls-right">
+        <button id="np-prev" class="sp-btn"><i class="fa-solid fa-backward-step"></i></button>
+        <button id="np-play" class="sp-btn sp-play-main"><i class="fa-solid fa-play" id="np-play-icon"></i></button>
+        <button id="np-next" class="sp-btn"><i class="fa-solid fa-forward-step"></i></button>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <button class="nav-item active" data-tab="tab-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Search</span>
+      </button>
+      <button class="nav-item" data-tab="tab-tasks">
+        <i class="fa-solid fa-circle-down"></i>
+        <span>Tasks</span>
+        <span class="nav-badge" id="mobile-task-badge" style="display: none;">0</span>
+      </button>
+      <button class="nav-item" data-tab="tab-library">
+        <i class="fa-solid fa-folder-open"></i>
+        <span>Library</span>
+      </button>
+      <button class="nav-item" data-tab="tab-player">
+        <i class="fa-brands fa-spotify"></i>
+        <span>Player</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Cookies Configuration Modal Sheet -->
+  <div id="cookies-modal" class="modal-sheet" style="display: none;">
+    <div class="modal-sheet-backdrop" id="cookies-modal-backdrop"></div>
+    <div class="modal-sheet-content">
+      <div class="modal-sheet-header">
+        <h3><i class="fa-solid fa-cookie-bite text-purple"></i> YouTube Cookies</h3>
+        <button id="close-cookies-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-sheet-body">
+        <p class="help-text">Pass cookies to prevent YouTube bot checks on Render cloud servers.</p>
+        <div id="cookies-active-banner" class="cookies-banner banner-active" style="display: none;">
+          <i class="fa-solid fa-circle-check"></i> <span><strong id="cookies-line-count">0</strong> Netscape entries active.</span>
+        </div>
+        <textarea id="cookies-textarea" placeholder="Paste Netscape cookies.txt content here..." rows="5"></textarea>
+        <div class="file-pick-row">
+          <label for="cookies-file-input" class="btn-file"><i class="fa-solid fa-file-arrow-up"></i> Upload cookies.txt</label>
+          <input type="file" id="cookies-file-input" accept=".txt" style="display: none;" />
+          <span id="cookies-file-name">No file chosen</span>
+        </div>
+      </div>
+      <div class="modal-sheet-footer">
+        <button id="save-cookies-btn" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Cookies</button>
+        <button id="delete-cookies-btn" class="btn-danger" style="display: none;"><i class="fa-solid fa-trash-can"></i> Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-region" class="toast-region"></div>
+
+  <!-- Mobile JavaScript Engine -->
+  <script src="{{ url_for('static', filename='js/mobile.js') }}?v=3.0.0"></script>
+</body>
+</html>
